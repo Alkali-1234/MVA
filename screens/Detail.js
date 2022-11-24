@@ -56,8 +56,8 @@ export default function Detail({route, navigation}) {
   }
 
   const onSynopsisPress = () => {
+    setShowSynopseesModal(true);
     if(!synopsesDataSnapshot){
-      const axios = require("axios");
 
       const options = {
         method: 'GET',
@@ -96,7 +96,7 @@ export default function Detail({route, navigation}) {
         shadowRadius: 10,
         elevation: 3
         }} source={{uri: image?.url}}></Image>
-        <TouchableOpacity style={styles.sinposisButton}><Text style={{alignSelf: 'center', fontWeight: '700', color: "white"}}>SYNOPSES</Text></TouchableOpacity>
+        <TouchableOpacity style={styles.sinposisButton} onPress={onSynopsisPress}><Text style={{alignSelf: 'center', fontWeight: '700', color: "white"}}>SYNOPSES</Text></TouchableOpacity>
       </View>
 
       {/* Reviews */}
@@ -182,7 +182,7 @@ export default function Detail({route, navigation}) {
               
             </View>
             <ScrollView>
-              <Text style={styles.text}></Text>
+              <Text style={styles.text}>{synopsesDataSnapshot? synopsesDataSnapshot.text : null}</Text>
             </ScrollView>
           </View>
 
