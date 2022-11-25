@@ -57,6 +57,7 @@ export default function Detail({route, navigation}) {
 
   const onSynopsisPress = () => {
     setShowSynopseesModal(true);
+    setSynopsesIsAnimating(true);
     if(!synopsesDataSnapshot){
 
       const options = {
@@ -71,6 +72,7 @@ export default function Detail({route, navigation}) {
       
       axios.request(options).then(function (response) {
         setSynopsesDataSnapshot(response.data);
+        setSynopsesIsAnimating(false);
       }).catch(function (error) {
         alert(error);
       });
@@ -175,14 +177,15 @@ export default function Detail({route, navigation}) {
           
           <View style={styles.modalContainer}>
             <View style={{flexDirection: 'row', justifyContent: 'space-between', backgroundColor: "#2c2c2c", marginHorizontal: 10}}>
-              <Text style={styles.header}>{selectedData?.reviewTitle}</Text>
-              <TouchableOpacity onPress={() => setShowModal(!showModal)}>
+              <Text style={styles.header}>{title}</Text>
+              <TouchableOpacity onPress={() => setShowSynopseesModal(false)}>
                 <AntDesign name="close" size={24} color="white"  />
               </TouchableOpacity> 
               
             </View>
             <ScrollView>
-              <Text style={styles.text}>{synopsesDataSnapshot? synopsesDataSnapshot.text : null}</Text>
+              {synopsesIsAnimating? <ActivityIndicator animating={synopsesIsAnimating} color="white" size={"large"} /> : null}
+              <Text style={styles.text}>{synopsesDataSnapshot? synopsesDataSnapshot[0].text : null}</Text>
             </ScrollView>
           </View>
 
