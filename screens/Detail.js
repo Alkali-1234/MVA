@@ -4,7 +4,9 @@ import React, {useEffect, useState} from 'react';
 // import {YouTubeStandaloneAndroid} from 'react-native-youtube';
 import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
+import StarRating from '../components/StarRating';
 import axios from 'axios';
+
 
 
 export default function Detail({route, navigation}) {
@@ -15,19 +17,19 @@ export default function Detail({route, navigation}) {
   const [showModal, setShowModal] = useState(false);
   const [extractedId, setExtractedId] = useState(null);
   const [isAnimating, setIsAnimating] = useState(false);
-
-
+  const [averageRating, setAverageRating] = useState(null);
+  const [filter, setFilter] = useState([]);
   const [dataSnapshot, setDataSnapshot] = useState(null);
+  const [filteredReview, setFilteredReview] = useState([]);
   const [showSynopsesModal, setShowSynopseesModal] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
   const [synopsesDataSnapshot, setSynopsesDataSnapshot] = useState(null);
   const [synopsesIsAnimating, setSynopsesIsAnimating] = useState(false);
 
   useEffect(() => {
-    navigation.setOptions({title: id})
+    navigation.setOptions("")
     let a = id.split("/");
     setExtractedId(a[2]);
-    
     
     if(!dataSnapshot){
       setIsAnimating(true);
@@ -44,11 +46,73 @@ export default function Detail({route, navigation}) {
     axios.request(options).then(function (response) {
       setDataSnapshot(response.data);
       setIsAnimating(false);
+      let totalRating = 0;
+      let ratingAmount = 0;
+      if(response.data["reviews"]){
+      response.data["reviews"].forEach(i => {
+        if(i.authorRating){
+          totalRating+=i.authorRating;
+          ratingAmount++;
+        }
+      });
+      setAverageRating(totalRating/ratingAmount);
+      }
+      setFilter([]);
+      
     }).catch(function (error) {
       alert(error);
     });
     }
   }, [])
+
+  //Filtered reviews
+  useEffect(() => {
+    let _filteredReview = [];
+    if(filter == ""){
+      dataSnapshot["reviews"].forEach(element => {
+        _filteredReview.push(element);
+      });
+    }
+    if(filter != ""){
+      dataSnapshot["reviews"].forEach(element => {
+        if(filter.includes(element.authorRating/2)){
+          _filteredReview.push(element);
+        }
+      });
+    }
+
+    setFilteredReview(_filteredReview);
+  }, [filter])
+
+  const toggleFilter = (num) => {
+    let _filter = [];
+    filter.forEach(i => {
+      _filter.push(i)
+    });
+    if(_filter.includes(num)){
+      _filter.splice(_filter.indexOf(num), 1);
+      setFilter(_filter);
+      return;
+    }
+    _filter.push(num);
+    setFilter(_filter);
+  }
+
+  const calcAvgRatingNearest_5 = (num) => {
+    // Check if num is closest to floor
+    const numDecimal = num-Math.floor(num);
+    if(numDecimal <= 0.25){
+      return Math.floor(num);
+    }
+    //Check if num is closest to .5
+    if(numDecimal > 0.25 && numDecimal < 0.75){
+      return Math.floor(num) + 0.5;
+    }
+    //Check if num is closest to +1
+    if(numDecimal >= 0.75){
+      return Math.floor(num) + 1;
+    }
+  }
 
   const onButtonReviewPress = (review) => {
     setSelectedData(review);
@@ -57,9 +121,9 @@ export default function Detail({route, navigation}) {
 
   const onSynopsisPress = () => {
     setShowSynopseesModal(true);
-    setSynopsesIsAnimating(true);
+    
     if(!synopsesDataSnapshot){
-
+    setSynopsesIsAnimating(true);
       const options = {
         method: 'GET',
         url: 'https://imdb8.p.rapidapi.com/title/get-synopses',
@@ -101,48 +165,61 @@ export default function Detail({route, navigation}) {
         <TouchableOpacity style={styles.sinposisButton} onPress={onSynopsisPress}><Text style={{alignSelf: 'center', fontWeight: '700', color: "white"}}>SYNOPSES</Text></TouchableOpacity>
       </View>
 
-      {/* Reviews */}
+
+
+      {/* Review */}
 
       <View style={styles.review}>
         <Text style={{color:'white', textAlign: 'center', fontSize: 25, paddingBottom: 10, borderBottomColor: 'white', borderBottomWidth: 1, marginBottom: 10, width: '90%'}}>Reviews</Text>
-        {isAnimating? <ActivityIndicator animating={isAnimating} color="white" size="large" /> : null}
-
         
+        {/* Average Rating & Sort */}
+        <View style={{flexDirection: 'row', width: "90%", justifyContent: 'space-between'}}>
+          <TouchableOpacity onPress={() => setFilter([])}>
+          <View style={{backgroundColor: '#282424', padding: 10, borderRadius: 8}}>
+            <AntDesign name="filter" size={24} color="white" />
+          </View>
+          </TouchableOpacity>
+          <View style={{backgroundColor: '#282424', padding: 10, borderRadius: 8, width:"85%", alignItems: 'center'}}>
+            <Text style={{color: 'white'}}>{averageRating > 0? <StarRating rating={calcAvgRatingNearest_5(averageRating/2)} color="yellow" size={20} /> : "No Ratings"}</Text>
+          </View>
+          
+          
+        </View>
+        <View style={{backgroundColor: '#282424', padding: 10, borderRadius: 8, width:"85%", alignItems: 'center', width: "90%", marginTop: 5, flexDirection: "column"}}>
+
+          <View style={{margin: 5, flexDirection: "row", justifyContent: 'space-evenly', width: "90%"}}>
+          <TouchableOpacity onPress={() => toggleFilter(1)}><StarRating rating={1} color={filter.includes(1)? "white" : "yellow"} size={15} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => toggleFilter(1.5)}><StarRating rating={1.5} color={filter.includes(1.5)? "white" : "yellow"} size={15} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => toggleFilter(2)}><StarRating rating={2} color={filter.includes(2)? "white" : "yellow"} size={15} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => toggleFilter(2.5)}><StarRating rating={2.5} color={filter.includes(2.5)? "white" : "yellow"} size={15} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => toggleFilter(3)}><StarRating rating={3} color={filter.includes(3)? "white" : "yellow"} size={15} /></TouchableOpacity>
+          </View>
 
 
-        <ScrollView style={{height:500, margin:10, paddingHorizontal: 5, paddingVertical:3}} nestedScrollEnabled={true}>
-          {dataSnapshot?.reviews? dataSnapshot["reviews"].map((item, index) => 
+          <View style={{margin: 5, flexDirection: "row", justifyContent: 'space-evenly', width: "90%"}}>
+          <TouchableOpacity onPress={() => toggleFilter(3.5)}><StarRating rating={3.5} color={filter.includes(3.5)? "white" : "yellow"} size={12} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => toggleFilter(4)}><StarRating rating={4} color={filter.includes(4)? "white" : "yellow"} size={12} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => toggleFilter(4.5)}><StarRating rating={4.5} color={filter.includes(4.5)? "white" : "yellow"} size={12} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => toggleFilter(5)}><StarRating rating={5} color={filter.includes(5)? "white" : "yellow"} size={12} /></TouchableOpacity>
+          </View>
+        </View>
+
+        {isAnimating? <ActivityIndicator animating={isAnimating} color="white" size="large" style={{marginVertical: 15}} /> : null}
+
+        <ScrollView style={{height:500, margin:10, paddingHorizontal: 5, paddingVertical:3, width: "92%"}} nestedScrollEnabled={true}>
+          {filteredReview? filteredReview.map((item, index) =>
+
           <TouchableOpacity style={styles.reviewCard} onPress={() => onButtonReviewPress(item)} key={index}>
 
             <View style={{flexDirection: 'row', justifyContent: 'space-between'}} >
-
-            {/* 1 */}
-            {item.authorRating==1? <Ionicons name="md-star-half-sharp" size={24} color="yellow" /> : null} 
-            {/* 2 */}
-            {item.authorRating==2? <Ionicons name="md-star-sharp" size={24} color="yellow" /> : null}
-            {/* 3 */}
-            {item.authorRating==3? (<View style={{flexDirection: 'row'}}><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-half-sharp" size={24} color="yellow" /></View>) : null}
-            {/* 4 */}
-            {item.authorRating==4? <View style={{flexDirection: 'row'}}><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /></View> : null}
-            {/* 5 */}
-            {item.authorRating==5? <View style={{flexDirection: 'row'}}><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-half-sharp" size={24} color="yellow" /></View> : null}
-            {/* 6 */}
-            {item.authorRating==6? <View style={{flexDirection: 'row'}}><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /></View> : null}
-            {/* 7 */}
-            {item.authorRating==7? <View style={{flexDirection: 'row'}}><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-half-sharp" size={24} color="yellow" /></View> : null}
-            {/* 8 */}
-            {item.authorRating==8? <View style={{flexDirection: 'row'}}><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /></View> : null}
-            {/* 9 */}
-            {item.authorRating==9? <View style={{flexDirection: 'row'}}><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-half-sharp" size={24} color="yellow" /></View> : null}
-            {/* 10 */}
-            {item.authorRating==10? <View style={{flexDirection: 'row'}}><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /><Ionicons name="md-star-sharp" size={24} color="yellow" /></View> : null}
-            
+            {item.authorRating? <StarRating rating={item.authorRating/2} color="yellow" size={24} /> : null}
             {item.spoiler? <Text style={{color: "white"}}>SPOILER</Text> : null}
             </View>
             <Text style={styles.reviewText}>{item.reviewTitle}</Text>
             <Text style={{color:"gray"}}>{item.author.displayName}</Text>
+
           </TouchableOpacity>
-        ) : null}
+          ) : <Text style={{color: "white"}}>No data</Text>}
         </ScrollView>
               {/* Modal */}
         <Modal
@@ -185,7 +262,14 @@ export default function Detail({route, navigation}) {
             </View>
             <ScrollView>
               {synopsesIsAnimating? <ActivityIndicator animating={synopsesIsAnimating} color="white" size={"large"} /> : null}
-              <Text style={styles.text}>{synopsesDataSnapshot? synopsesDataSnapshot[0].text : null}</Text>
+              {
+                synopsesDataSnapshot? (
+                  <Text style={styles.text}>{synopsesDataSnapshot[0].text? (synopsesDataSnapshot[0].text) : ("No Synopses")}</Text>
+                ):(
+                  null
+                )
+              }
+              
             </ScrollView>
           </View>
 
@@ -207,6 +291,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#2c2c2c',
     alignSelf: 'center',
     padding: 20,
+    width: "100%",
+    height: "100%"
   },
   main: {
     alignItems: 'center',
