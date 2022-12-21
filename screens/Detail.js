@@ -68,17 +68,21 @@ export default function Detail({route, navigation}) {
   //Filtered reviews
   useEffect(() => {
     let _filteredReview = [];
-    if(filter == ""){
+    if(filter == "" && dataSnapshot != null){
+      if(dataSnapshot["reviews"]){
       dataSnapshot["reviews"].forEach(element => {
         _filteredReview.push(element);
       });
+      }
     }
-    if(filter != ""){
+    if(filter != "" && dataSnapshot != null){
+      if(dataSnapshot["reviews"]){
       dataSnapshot["reviews"].forEach(element => {
         if(filter.includes(element.authorRating/2)){
           _filteredReview.push(element);
         }
       });
+      }
     }
 
     setFilteredReview(_filteredReview);
@@ -148,8 +152,8 @@ export default function Detail({route, navigation}) {
       <ScrollView nestedScrollEnabled={true}>
     <View style={styles.container}>
       <View style={styles.main}>
-        <Text style={styles.header} adjustsFontSizeToFit={true} numberOfLines={1}>{title}</Text>
-        <Text style={styles.subHeading}>{type}</Text>
+        <Text style={styles.header} adjustsFontSizeToFit={true} numberOfLines={1}>{title? title : "No Title"}</Text>
+        <Text style={styles.subHeading}>{type? type.toUpperCase() : "No Type"}</Text>
       </View>
       <View style={styles.sub}>
         <Image style={{width: 200, height: 300, resizeMode:'contain', borderColor: "#2c2c2c",
@@ -207,7 +211,7 @@ export default function Detail({route, navigation}) {
         {isAnimating? <ActivityIndicator animating={isAnimating} color="white" size="large" style={{marginVertical: 15}} /> : null}
 
         <ScrollView style={{height:500, margin:10, paddingHorizontal: 5, paddingVertical:3, width: "92%"}} nestedScrollEnabled={true}>
-          {filteredReview? filteredReview.map((item, index) =>
+          {filteredReview != ""? filteredReview.map((item, index) =>
 
           <TouchableOpacity style={styles.reviewCard} onPress={() => onButtonReviewPress(item)} key={index}>
 
@@ -219,7 +223,7 @@ export default function Detail({route, navigation}) {
             <Text style={{color:"gray"}}>{item.author.displayName}</Text>
 
           </TouchableOpacity>
-          ) : <Text style={{color: "white"}}>No data</Text>}
+          ) : <Text style={{color: "white", alignSelf: 'center'}}>No Reviews</Text>}
         </ScrollView>
               {/* Modal */}
         <Modal
@@ -264,7 +268,7 @@ export default function Detail({route, navigation}) {
               {synopsesIsAnimating? <ActivityIndicator animating={synopsesIsAnimating} color="white" size={"large"} /> : null}
               {
                 synopsesDataSnapshot? (
-                  <Text style={styles.text}>{synopsesDataSnapshot[0].text? (synopsesDataSnapshot[0].text) : ("No Synopses")}</Text>
+                  <Text style={styles.text}>{synopsesDataSnapshot[0]? (synopsesDataSnapshot[0].text) : ("No Synopses")}</Text>
                 ):(
                   null
                 )

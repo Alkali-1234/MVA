@@ -1254,8 +1254,8 @@ function Home({navigation}) {
       setShowModal(false);
       navigation.navigate("Detail", {
             id: _id.toString(),
-            title: _title.toString(),
-            type: _type.toUpperCase(),
+            title: _title,
+            type: _type,
             image: _image,
             imageW: _imageW,
             imageH: _imageH
@@ -1323,10 +1323,10 @@ function Home({navigation}) {
             
             
             <View style={styles.headerContainer}>
-              <Text style={styles.header}>{selectedItem.title}</Text>
-              <Text style={styles.subHeader}>{selectedItem.titleType.toUpperCase()}</Text>
+              <Text style={styles.header}>{selectedItem.title? selectedItem.title : "No title"}</Text>
+              <Text style={styles.subHeader}>{selectedItem.titleType? selectedItem.titleType.toUpperCase() : "No Type"}</Text>
             </View>
-            <Image style={{width: 200, height: 300, resizeMode:'contain',
+            {selectedItem.image? <Image style={{width: 200, height: 300, resizeMode:'contain',
               borderRadius: 15,
               //Shadow
               shadowColor: 'black',
@@ -1335,7 +1335,11 @@ function Home({navigation}) {
               shadowRadius: 10,
               elevation: 3
               }} source={{uri: selectedItem.image?.url}} />
-              
+            : <View style={{width: 200, height: 300, backgroundColor: "#15011a", borderRadius: 15, justifyContent: 'center', alignItems: 'center',shadowColor: 'black',
+            shadowOpacity: 0.26,
+            shadowOffset: { width: 0, height: 2},
+            shadowRadius: 10,
+            elevation: 3}}><Text style={{color:"white"}}>No Image</Text></View>}
               <View style={styles.detailsButtonContainer}>
                 <TouchableOpacity style={styles.detailsButton} onPress={() => setShowModal(false)} >
                 <Text style={styles.detailsButton.text}><Ionicons name="exit-outline" size={24} color="white" /></Text>
